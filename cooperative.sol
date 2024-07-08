@@ -1,65 +1,92 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.10;
 
-contract ResearchTeamRegistration {
+contract colabresearch{
+
+    struct Org{
+        mapping(address => Member) members;
+        string orgName;
+
+    }
+
     struct Member {
         string name;
         string role;
         string profile;
         bool isRegistered;
+        string orgName;
     }
 
-    address public admin;
-    mapping(address => Member) public members;
-    address[] public memberAddresses;
-
-    event MemberRegistered(address indexed memberAddress, string name, string role, string profile);
-    event MemberUpdated(address indexed memberAddress, string name, string role, string profile);
-
-    modifier onlyAdmin() {
-        require(msg.sender == admin, "Only admin can perform this action");
-        _;
+    struct healthData {
+        string [] healthStat;
+        uint [] healthStatTime;
+        string [] prescription;
+        uint [] prescriptionTime;
+        uint [] dosage;
+        uint [] nextAP;
+        string [] labResult;
+        uint [] labResultTime;
     }
 
-    modifier onlyMember() {
-        require(members[msg.sender].isRegistered, "Only registered members can perform this action");
-        _;
-    }
+    string patient = "patient";
+    string clinicalTeam = "clinicalTeam";
 
-    constructor() {
-        admin = msg.sender;
-    }
+    // address public admin;
+    mapping(string => Org) orgs;
+    mapping (address => healthData) healthDatas;
 
-    function registerMember(address _memberAddress, string memory _name, string memory _role, string memory _profile) public onlyAdmin {
-        require(!members[_memberAddress].isRegistered, "Member is already registered");
 
-        members[_memberAddress] = Member({
+    function registerMember(address _memberAddress, string memory _name, string memory _org, string memory _role, string memory _profile) public {
+        require(!orgs[_org].members[_memberAddress].isRegistered, "Member is already registered");
+
+        orgs[_org].orgName = _org;
+        orgs[_org].members[_memberAddress] = Member({
             name: _name,
+            orgName: _org,
             role: _role,
             profile: _profile,
             isRegistered: true
         });
-
-        memberAddresses.push(_memberAddress);
-        emit MemberRegistered(_memberAddress, _name, _role, _profile);
     }
 
-    function updateMemberDetails(string memory _name, string memory _role, string memory _profile) public onlyMember {
-        Member storage member = members[msg.sender];
 
-        member.name = _name;
-        member.role = _role;
-        member.profile = _profile;
-
-        emit MemberUpdated(msg.sender, _name, _role, _profile);
+    function updateHealthStat(address _userAdd, string memory _healthStat)external{
+        require(orgs[patient].members[_userAdd].isRegistered == true);
+        require(orgs[clinicalTeam].members[msg.sender].isRegistered == true);
+        healthDatas[_userAdd].healthStat.push(_healthStat);
+        healthDatas[_userAdd].healthStatTime.push(block.timestamp);
+        
+        
     }
 
-    function getMemberDetails(address _memberAddress) public view returns (string memory, string memory, string memory, bool) {
-        Member memory member = members[_memberAddress];
-        return (member.name, member.role, member.profile, member.isRegistered);
+    function updatelabResult(address _userAdd, string memory _labResult)external{
+        require(orgs[patient].members[_userAdd].isRegistered == true);
+        require(orgs[clinicalTeam].members[msg.sender].isRegistered == true);
+        healthDatas[_userAdd].labResult.push(_labResult);
+        healthDatas[_userAdd].labResultTime.push(block.timestamp);
+        
+        
     }
 
-    function getAllMembers() public view returns (address[] memory) {
-        return memberAddresses;
+    function updateprescriptiont(address _userAdd, string memory _prescription, uint _dosage)external{
+        require(orgs[patient].members[_userAdd].isRegistered == true);
+        require(orgs[clinicalTeam].members[msg.sender].isRegistered == true);
+        healthDatas[_userAdd].prescription.push(_prescription);
+        healthDatas[_userAdd].dosage.push(_dosage);
+        healthDatas[_userAdd].prescriptionTime.push(block.timestamp);
+               
     }
+        function updatenextAP(address _userAdd, uint _nextAP)public {
+        require(orgs[patient].members[_userAdd].isRegistered == true);
+        require(orgs[clinicalTeam].members[msg.sender].isRegistered == true);
+        healthDatas[_userAdd].nextAP.push(_nextAP);
+        // healthDatas[_userAdd].labResultTime.push(block.timestamp);
+        
+    }function viewMember(string memory _org, address _user)external view returns(Member memory){
+        return orgs[_org].members[_user];
+    }
+    function viewUpdate(address _user)external view returns(healthData memory){
+        return healthDatas[_user];
+    }
+
 }
